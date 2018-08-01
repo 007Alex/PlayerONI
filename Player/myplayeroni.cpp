@@ -9,12 +9,16 @@ QImage MyPlayerONI::toQImageFromRgb(openni::VideoFrameRef colorFrame) {
 
 QImage MyPlayerONI::toQImageFromDepth(openni::VideoFrameRef depthFrame) {
     uchar* n_data = (uchar*)(depthFrame.getData());
+    int step = depthFrame.getStrideInBytes() / depthFrame.getWidth();
     int len = depthFrame.getDataSize();
-    uchar* data = new uchar[len/2];
-    for(int i = 0; i < len; i+=2){
-        int k = max_depth - (n_data[i] + n_data[i+1]*256);
+    uchar* data = new uchar[len/step];
+    for(int i = 0; i < len; i+=step){
+        int k = 0;
+        for(int j = step - 1; j >= 0; j--)
+            k = k * 256 + n_data[i+j];
+        k = max_depth - k;
         if(k < 0) k = 0;
-        data[i/2] = k * 255 / max_depth;
+        data[i/step] = k * 255 / max_depth;
     }
     QImage image= QImage((uchar*)data,
                   depthFrame.getWidth(), depthFrame.getHeight(),
